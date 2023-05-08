@@ -49,7 +49,7 @@ data:
     events {}
     stream {
         upstream wireguard_servers {
-            server 10.123.15.38:51820;
+            server 10.123.15.38:51820 fail_timeout=5s max_fails=3;
             server 10.123.15.37:51820 backup;
         }
         server {

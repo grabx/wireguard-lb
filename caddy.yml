@@ -1,0 +1,127 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: caddy
+  namespace: wg
+  labels:
+    app: caddy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: caddy
+  template:
+    metadata:
+      labels:
+        app: caddy
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+        - name: caddy
+          resources: {}
+          image: grabxsolutions/caddy-l4:latest
+          args:
+          - run
+          - --config
+          - caddy.json
+          ports:
+            - containerPort: 51820
+              protocol: UDP
+              name: wg
+          volumeMounts:
+            - name: caddy-config
+              mountPath: /app/caddy.json
+              subPath: caddy.json
+      volumes:
+        - name: caddy-config
+          configMap:
+            name: caddy-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wg-svc
+  namespace: wg
+  #annotations:
+  #  service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+spec:
+  type: LoadBalancer
+  ports:
+  - name: wg
+    port: 51820
+    protocol: UDP
+    targetPort: wg
+  selector:
+    app: caddy
+
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: caddy-config
+  namespace: wg
+data:
+  caddy.json: |
+    {
+        "logging": {
+            "sink": {
+                "writer": {
+                    "output": "stdout"
+                }
+            },
+            "logs": {
+                "udp": {
+                    "level": "DEBUG"
+                }
+            }
+        },
+        "apps": {
+            "layer4": {
+                "servers": {
+                    "udp": {
+                        "listen": [
+                            "udp/0.0.0.0:51820"
+                        ],
+                        "routes": [
+                            {
+                                "handle": [
+                                    {
+                                        "handler": "proxy",
+                                        "load_balancing": {
+                                            "selection": {
+                                                "policy": "first"
+                                            }
+                                        },
+                                        "health_checks": {
+                                            "active": {
+                                              "port": 51820,
+                                              "interval": "5s",
+                                              "timeout": "5s"
+                                            },
+                                            "passive": {
+                                              "fail_duration": 60,
+                                              "max_fails": 1,
+                                              "unhealthy_connnection_count": 0
+                                            }
+                                        },
+                                        "upstreams": [
+                                            {
+                                                "dial": [
+                                                    "udp/10.123.15.38:51820",
+                                                    "udp/10.123.15.37:51820"
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    }
