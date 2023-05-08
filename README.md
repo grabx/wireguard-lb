@@ -46,8 +46,8 @@ Advantages:
 ```mermaid
 flowchart TD
     A[Extension Box Client] -->|Connect to Public IP| B{Load Balancer}
-    B --- X["Wireguard Server 1"]
-    B --- Y["Wireguard Server 2"]
+    B ---|Health probe successful| X["Wireguard Server 1 (Active)"]
+    B ---|Health Probe failed| Y["Wireguard Server 2 (Pseudo Passive)"]
     X -->|Connect to Private IP| E[Extension Box Backend]
     Y -->|Connect to Private IP| E[Extension Box Backend]
 ```
@@ -57,6 +57,7 @@ Disadvantages:
 - No Active / Passive setup possible (Azure LoadBalancer limitation)
 - Connections to Wireguard servers are random because of Active / Active
 - Reverse connection from Backend to Client is random because of possible async routing (Active / Active issues)
+- Needs to manually set health probe of one Wireguard server as failed and needs to set the probe as healthy in case of incident so that synchronous routing works
 
 Advantages:
 
