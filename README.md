@@ -38,6 +38,7 @@ Advantages:
 
 - Routing both ways is synchronous
 - HA Setup possible
+- Wireguard servers can be configured as active / passive
 - Proxy runs as container
 
 ## Active / Active with Azure Loadbalancer
