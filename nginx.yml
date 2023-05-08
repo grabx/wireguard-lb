@@ -1,0 +1,80 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: wg
+  labels:
+    app: nginx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+        - name: nginx
+          resources: {}
+          imagePullPolicy: Always
+          image: nginx:mainline
+          #grabxsolutions/nginx-stream:latest
+          ports:
+            - containerPort: 51820
+              protocol: UDP
+              name: wg
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-config
+
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: wg
+data:
+  nginx.conf: |
+    events {}
+    stream {
+        upstream wireguard_servers {
+            server 10.123.15.38:51820;
+            server 10.123.15.37:51820 backup;
+        }
+        server {
+            listen          51820 udp;
+            proxy_pass      wireguard_servers;
+        }
+    }
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-svc
+  namespace: wg
+  annotations:
+    service.beta.kubernetes.io/azure-dns-label-name: wireguardr4
+  #  service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 20.250.60.67
+  ports:
+  - name: wg
+    port: 51820
+    protocol: UDP
+    targetPort: wg
+  selector:
+    app: nginx
