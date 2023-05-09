@@ -63,3 +63,28 @@ Advantages:
 
 - Native Azure components
 - Automated with ARM deployments
+
+## HA Solution with Headscale
+
+Headscale is an open source version of Tailscale which makes it easy to connect multiple systems in a mesh network. The solution is deployed inside an AKS Cluster (HA by default) which acts as the server. Clients connect to the server. If direct connectivity cannot be ensured the connection will be made over a relay server in the internet. All communication is End-To-End encrypted with modern TLS encryption.
+
+```mermaid
+flowchart TD
+    A[Extension Box Client] -->|Connect to Public IP| B{Load Balancer}
+    B --> C[AKS Cluster]
+    C --> D{Headscale Server}
+    D --> X[Tailscale Relay]
+    X --> F["Extension Box Backend (Via Relay)"]
+    D --> E["Extension Box Backend (Direct)"]
+```
+
+Advantages:
+
+- Communication is possible both ways
+- Uses clever technologies to do NAT traversal
+- Uses relays (hosted by Tailscale) to make communication possible everywhere
+
+Disadvantages:
+
+- Setup on client on server is more involved
+- Communication via relay causes slightly more latency

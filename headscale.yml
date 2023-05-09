@@ -1,0 +1,98 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hs
+  namespace: wg
+  labels:
+    app: hs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hs
+  template:
+    metadata:
+      labels:
+        app: hs
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+        # - name: busybox
+        #   image: busybox
+        #   stdin: true
+        #   stdinOnce: true
+        #   tty: true
+        #   resources: {}
+        #   volumeMounts:
+        #     - name: hs-data
+        #       mountPath: /etc/headscale
+        - name: hs
+          resources: {}
+          imagePullPolicy: Always
+          image: headscale/headscale
+          tty: true
+          stdin: true
+          command: 
+          - headscale 
+          - serve
+          ports:
+            - containerPort: 443
+              name: web
+            - containerPort: 9090
+              name: metric
+            - containerPort: 3478
+              name: derp
+            - containerPort: 80
+              name: le
+          volumeMounts:
+            - name: hs-data
+              mountPath: /etc/headscale
+      volumes:
+        - name: hs-data
+          persistentVolumeClaim:
+            claimName: hs-data
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hs-svco
+  namespace: wg
+  annotations:
+    service.beta.kubernetes.io/azure-dns-label-name: headscaler4
+  #  service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+spec:
+  type: LoadBalancer
+  #loadBalancerIP: 20.250.60.67
+  ports:
+  - name: web
+    port: 443
+    targetPort: web
+  - name: metric
+    port: 9090
+    targetPort: metric
+  - name: derp
+    port: 3478
+    targetPort: derp
+  - name: le
+    port: 80
+    targetPort: le
+  selector:
+    app: hs
+
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hs-data
+  namespace: wg
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: managed-csi
+  resources:
+    requests:
+      storage: 200Mi
