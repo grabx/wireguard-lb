@@ -88,3 +88,19 @@ Disadvantages:
 
 - Setup on client on server is more involved
 - Communication via relay causes slightly more latency
+
+## Tailscale (Hosted in the Cloud by Tailscale)
+
+Tailscale is the commercial version of Headscale that enables users to create their own private mesh networks.
+
+Advantages:
+
+- Hosted externally. No patching, backup, etc. of servers neccessary
+- Simplified configuration: Clients just connect by opening a link and authenticating themselves.
+- Uses Wireguard as underlying meshing solution.
+- Is HA already since it is managed by Tailscale.
+
+Disadvantages:
+
+- Cost: Free version sets a maximum of 3 Users (for Web interface) and 100 devices. For more users and some more special features there are other price plans.
+- Since it is a service it has to be trusted not to do nefarious things with your data.
