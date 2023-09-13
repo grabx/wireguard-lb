@@ -104,3 +104,4 @@ Disadvantages:
 
 - Cost: Free version sets a maximum of 3 Users (for Web interface) and 100 devices. For more users and some more special features there are other price plans.
 - Since it is a service it has to be trusted not to do nefarious things with your data.
+- Priority Support only for Premium plans and upwards.
